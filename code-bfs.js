@@ -3,58 +3,85 @@ import dataTest from "./dataTest.js"
 
 let answers = []
 
+class Coor {
+    constructor(x, y, distance) {
+        this.x = x;
+        this.y = y;
+        this.distance = distance
+    }
+}
+
+const getToVisit = (kiosk, toVisit = []) => {
+    toVisit.push(new Coor(kiosk.x + 1, kiosk.y, kiosk.distance + 1))
+    toVisit.push(new Coor(kiosk.x - 1, kiosk.y, kiosk.distance + 1))
+    toVisit.push(new Coor(kiosk.x, kiosk.y + 1, kiosk.distance + 1))
+    toVisit.push(new Coor(kiosk.x, kiosk.y - 1, kiosk.distance + 1))
+}
+
 for (let data of datas) {
     let result = []
-    let visited = []
+    let kiosks = []
 
-    let funcRec = (i, j, count) => {
-        // console.log("i,j,count: ",i,j,count)
-        if (!visited[i]) {
-            visited[i] = []
-        }
-        else if (visited[i] && visited[i][j] === 1) {
-            return count
-        }
-        visited[i][j] = 1
-
-        if (i < 0 || j < 0 || i >= data.length || j >= data[i].length) {
-            return Number.MAX_SAFE_INTEGER;
-        }
-        // console.log(result[i])
-        if (result[i] && result[i].length > 0 && result[i][j]) {
-            // console.log("i,j,result[i][j], count: ",i,j,result[i][j], count)
-            return result[i][j] + count
-        }
-        else if (data[i][j] === 'k') {
-            // console.log("here")
-            // result[i][j] = 0
-            return count
-        }
-        else if (data[i][j] === 'c') {
-            // console.log("here2")
-            let a = funcRec(i + 1, j, count + 1)
-            let b = funcRec(i - 1, j, count + 1)
-            let c = funcRec(i, j + 1, count + 1)
-            let d = funcRec(i, j - 1, count + 1)
-            // console.log("abcd:", a,b,c,d)
-            let final = Math.min(a, b, c, d)
-            // console.log("result: ", final)
-            // result[i][j] = final
-            return final
-        }
-    }
-
+    // initialize result and kiosks
     for (let i = 0; i < data.length; i++) {
-        result[i] = []
+        result.push([])
         for (let j = 0; j < data[i].length; j++) {
-            result[i][j] = null
-        }
-        for (let j = 0; j < data[i].length; j++) {
-            visited = []
-            result[i][j] = funcRec(i, j, 0)
-            // console.log("result[i][j]: ",result[i][j])
+            if (data[i][j] === "k") {
+                const coor = new Coor(j, i, 0)
+                kiosks.push(coor)
+                result[i].push(0)
+            }
+            else {
+                result[i].push(null)
+            }
         }
     }
+
+    // console.log(kiosks)
+
+    // loop through kiosks to spread out and find neighbour's distance
+    for (let kiosk of kiosks) {
+        let toVisit = []
+        let visited = []
+        visited.push(new Coor(kiosk.x, kiosk.y, 0))
+        getToVisit(kiosk, toVisit)
+        while (toVisit.length > 0) {
+            let currentKiosk = toVisit[0]
+            toVisit.shift()
+
+            // check out of bound
+            if (currentKiosk.x < 0 || currentKiosk.y < 0 || currentKiosk.x >= data[0].length || currentKiosk.y >= data.length) {
+                continue
+            }
+
+            // check visited
+            let shouldContinueNext = false
+            for (const v of visited) {
+                if (v.x === currentKiosk.x && v.y === currentKiosk.y) {
+                    shouldContinueNext = true
+                    break
+                }
+            }
+            if (shouldContinueNext) {
+                continue
+            }
+
+            // check if distance is already bigger
+            if (result[currentKiosk.y][currentKiosk.x] !== null && currentKiosk.distance >= result[currentKiosk.y][currentKiosk.x]) {
+                continue
+            }
+
+            visited.push(new Coor(currentKiosk.x, currentKiosk.y, 0))
+            getToVisit(currentKiosk, toVisit)
+            if (result[currentKiosk.y][currentKiosk.x] === null) {
+                result[currentKiosk.y][currentKiosk.x] = currentKiosk.distance
+            }
+            else if (currentKiosk.distance < result[currentKiosk.y][currentKiosk.x]) {
+                result[currentKiosk.y][currentKiosk.x] = currentKiosk.distance
+            }
+        }
+    }
+
 
     console.log(result)
     answers.push(result)
